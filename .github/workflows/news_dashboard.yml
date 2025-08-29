@@ -1,0 +1,35 @@
+name: Daily News Dashboard Email
+
+on:
+  schedule:
+    # 매일 한국 서울시간 오전 9시 (UTC 0시)
+    - cron: '12 17 * * *'
+  workflow_dispatch:  # 수동 실행 허용
+
+jobs:
+  send_news_email:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install googletrans==3.1.0a0 requests
+
+    - name: Run news dashboard email script
+      env:
+        NEWSAPI_KEY: ${{ secrets.NEWSAPI_KEY }}
+        NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+        NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        SMTP_USER: ${{ secrets.SMTP_USER }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      run: |
+        python3 news_dashboard_email.py
