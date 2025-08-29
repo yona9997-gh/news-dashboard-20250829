@@ -3,7 +3,7 @@ name: Daily News Dashboard Email
 on:
   schedule:
     # 매일 한국 서울시간 오전 9시 (UTC 0시 기준 0시 → cron 시간은 UTC, 기존 12 17은 오후 5시 12분임)
-    - cron: '33 17 * * *'
+    - cron: '53 17 * * *'
   workflow_dispatch:  # 수동 실행 허용
 
 jobs:
@@ -33,3 +33,5 @@ jobs:
         SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       run: |
         python3 news_dashboard_email.py
+
+        
