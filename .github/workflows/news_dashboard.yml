@@ -1,8 +1,9 @@
 name: Daily News Dashboard Email
 on:
   schedule:
-    # 매일 한국 서울시간 오전 10시 5분 (UTC 1시 5분) → cron 시간은 UTC 기준, 즉 1 5
-    - cron: '5 1 * * *'
+    # KST(UTC+9) 00:00~23:50까지 10분 단위 실행
+    # UTC 기준 15:00(전일)~14:50(당일) (KST는 UTC보다 9시간 빠름)
+    - cron: '*/10 * * * *'
   workflow_dispatch:  # 수동 실행 허용
 jobs:
   send_news_email:
