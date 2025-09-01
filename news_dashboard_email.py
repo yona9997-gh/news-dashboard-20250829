@@ -33,6 +33,7 @@ yesterday = today - timedelta(days=1)
 NEWSAPI_URL = 'https://newsapi.org/v2/everything'
 NAVER_URL = 'https://openapi.naver.com/v1/search/news.json'
 
+
 def fetch_newsapi_news(keyword):
     from_date = yesterday.strftime('%Y-%m-%d')
     to_date = yesterday.strftime('%Y-%m-%d')
@@ -51,6 +52,7 @@ def fetch_newsapi_news(keyword):
     else:
         print(f'NewsAPI error ({keyword}):', response.status_code, response.text)
         return []
+
 
 def fetch_naver_news(keyword):
     headers = {
@@ -79,14 +81,21 @@ def fetch_naver_news(keyword):
         print(f'Naver API error ({keyword}):', response.status_code, response.text)
         return []
 
+
 def translate_text(text):
+    if not text:
+        return ""
     try:
-        return translator.translate(text, lang_src='en', lang_tgt='ko')
-    except Exception:
+        translated = translator.translate(text, lang_src='en', lang_tgt='ko')
+        return translated
+    except Exception as e:
+        print(f"Translation error: {e}; returning original text.")
         return text
+
 
 def escape_html(text):
     return html.escape(text)
+
 
 def build_html_dashboard():
     html_output = """
@@ -183,6 +192,7 @@ def build_html_dashboard():
     """
     return html_output
 
+
 def send_email(subject, html_content, sender, recipients):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
@@ -196,10 +206,11 @@ def send_email(subject, html_content, sender, recipients):
         server.sendmail(sender, recipients, msg.as_string())
         print("메일 발송 성공")
 
+
 def main():
     html_dashboard = build_html_dashboard()
     send_email("SKT 뉴스 대시보드", html_dashboard, SMTP_USER, recipients)
 
+
 if __name__ == "__main__":
     main()
-
