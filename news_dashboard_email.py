@@ -26,6 +26,7 @@ keywords_en = ['mobile device', 'mobile modem chipset', 'on-device AI', 'on-devi
 keywords_kr = ['이동통신 단말기', '단말 모뎀 칩셋', '온디바이스 AI', '온디바이스 보안']
 
 translator = google_translator()
+
 today = datetime.utcnow().date() + timedelta(hours=9)  # UTC +9 서울시간으로 변환
 yesterday = today - timedelta(days=1)
 
@@ -201,4 +202,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
