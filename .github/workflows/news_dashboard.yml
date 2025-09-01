@@ -28,3 +28,4 @@ jobs:
         SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       run: |
         python3 news_dashboard_email.py
+        
