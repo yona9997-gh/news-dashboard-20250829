@@ -1,5 +1,5 @@
 import requests
-from googletrans import Translator
+from google_trans_new import google_translator
 from datetime import datetime, timedelta
 import random
 import html
@@ -25,7 +25,7 @@ recipients = ['jonah.whang@sktelecom.com', 'yona997@naver.com']
 keywords_en = ['mobile device', 'mobile modem chipset', 'on-device AI', 'on-device security']
 keywords_kr = ['이동통신 단말기', '단말 모뎀 칩셋', '온디바이스 AI', '온디바이스 보안']
 
-translator = Translator()
+translator = google_translator()
 today = datetime.utcnow().date() + timedelta(hours=9)  # UTC +9 서울시간으로 변환
 yesterday = today - timedelta(days=1)
 
@@ -80,7 +80,7 @@ def fetch_naver_news(keyword):
 
 def translate_text(text):
     try:
-        return translator.translate(text, src='en', dest='ko').text
+        return translator.translate(text, lang_src='en', lang_tgt='ko')
     except Exception:
         return text
 
@@ -97,19 +97,15 @@ def build_html_dashboard():
     <body style="font-family: Arial, sans-serif; background-color:#f7f7f7; margin:0; padding:20px;">
       <h2 style="color:#2c3e50; border-bottom:2px solid #2980b9; padding-bottom:10px;">뉴스 대시보드</h2>
     """
-
     for i in range(len(keywords_en)):
         kw_en = keywords_en[i]
         kw_kr = keywords_kr[i]
-
         section_style = (
             "background-color:#ffffff; padding:15px; margin-bottom:30px; "
             "border-radius:8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"
         )
-
         html_output += f'<div style="{section_style}">'
         html_output += f'<h3 style="color:#2980b9;">{escape_html(kw_kr)} (영어: {escape_html(kw_en)})</h3>'
-
         english_news = fetch_newsapi_news(kw_en)
         english_items = []
         for article in english_news:
@@ -128,7 +124,6 @@ def build_html_dashboard():
                 'url': url,
                 'publishedAt': published_str
             })
-
         korean_news = fetch_naver_news(kw_kr)
         korean_items = []
         for item in korean_news:
@@ -147,17 +142,14 @@ def build_html_dashboard():
                 'url': url,
                 'publishedAt': published_str
             })
-
         combined = english_items[:5] + korean_items[:5]
         random.shuffle(combined)
-
         table_style = "width:100%; border-collapse: collapse;"
         th_style = (
             "background-color:#2980b9; color:#fff; padding:10px; text-align:left; font-size:16px;"
             "border-bottom: 2px solid #1c5980;"
         )
         td_style = "border-bottom:1px solid #ddd; padding:10px; vertical-align:top;"
-
         html_output += f'<table style="{table_style}">'
         html_output += (
             f"<tr>"
@@ -168,13 +160,11 @@ def build_html_dashboard():
             f"<th style='{th_style}'>링크</th>"
             f"</tr>"
         )
-
         for idx, item in enumerate(combined, 1):
             title = escape_html(item['title'])
             description = escape_html(item['description'])
             publishedAt = escape_html(item['publishedAt'])
             url = escape_html(item['url'])
-
             html_output += (
                 f"<tr>"
                 f"<td style='{td_style}'>{idx}</td>"
@@ -186,7 +176,6 @@ def build_html_dashboard():
                 f"</tr>"
             )
         html_output += "</table></div>"
-
     html_output += """
     </body>
     </html>
@@ -198,10 +187,8 @@ def send_email(subject, html_content, sender, recipients):
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
-
     part = MIMEText(html_content, 'html', 'utf-8')
     msg.attach(part)
-
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
@@ -214,3 +201,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
