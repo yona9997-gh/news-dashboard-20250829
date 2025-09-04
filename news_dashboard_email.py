@@ -1,5 +1,5 @@
 import requests
-from google_trans_new import google_translator
+from googletrans import Translator
 from datetime import datetime, timedelta
 import random
 import html
@@ -7,6 +7,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
+import time
 
 # 환경변수로부터 키 가져오기
 NEWSAPI_KEY = os.getenv('NEWSAPI_KEY')
@@ -25,14 +26,12 @@ recipients = ['jonah.whang@sktelecom.com', 'yona997@naver.com']
 keywords_en = ['mobile device', 'mobile modem chipset', 'on-device AI', 'on-device security']
 keywords_kr = ['이동통신 단말기', '단말 모뎀 칩셋', '온디바이스 AI', '온디바이스 보안']
 
-translator = google_translator()
-
+translator = Translator()
 today = datetime.utcnow().date() + timedelta(hours=9)  # UTC +9 서울시간으로 변환
 yesterday = today - timedelta(days=1)
 
 NEWSAPI_URL = 'https://newsapi.org/v2/everything'
 NAVER_URL = 'https://openapi.naver.com/v1/search/news.json'
-
 
 def fetch_newsapi_news(keyword):
     from_date = yesterday.strftime('%Y-%m-%d')
@@ -52,7 +51,6 @@ def fetch_newsapi_news(keyword):
     else:
         print(f'NewsAPI error ({keyword}):', response.status_code, response.text)
         return []
-
 
 def fetch_naver_news(keyword):
     headers = {
@@ -81,21 +79,22 @@ def fetch_naver_news(keyword):
         print(f'Naver API error ({keyword}):', response.status_code, response.text)
         return []
 
-
 def translate_text(text):
     if not text:
         return ""
-    try:
-        translated = translator.translate(text, lang_src='en', lang_tgt='ko')
-        return translated
-    except Exception as e:
-        print(f"Translation error: {e}; returning original text.")
-        return text
-
+    tries = 3
+    for i in range(tries):
+        try:
+            translated = translator.translate(text, src='en', dest='ko')
+            return translated.text
+        except Exception as e:
+            print(f"Translation error on attempt {i+1}: {e}")
+            time.sleep(1)
+    print("Translation failed after retries; returning original text.")
+    return text
 
 def escape_html(text):
     return html.escape(text)
-
 
 def build_html_dashboard():
     html_output = """
@@ -181,8 +180,7 @@ def build_html_dashboard():
                 f"<td style='{td_style}'>{title}</td>"
                 f"<td style='{td_style}'>{description}</td>"
                 f"<td style='{td_style}'>{publishedAt}</td>"
-                f"<td style='{td_style}'><a href='{url}' target='_blank' "
-                f"style='color:#2980b9; text-decoration:none;'>링크</a></td>"
+                f"<td style='{td_style}'><a href='{url}' target='_blank' style='color:#2980b9; text-decoration:none;'>링크</a></td>"
                 f"</tr>"
             )
         html_output += "</table></div>"
@@ -191,7 +189,6 @@ def build_html_dashboard():
     </html>
     """
     return html_output
-
 
 def send_email(subject, html_content, sender, recipients):
     msg = MIMEMultipart('alternative')
@@ -206,11 +203,9 @@ def send_email(subject, html_content, sender, recipients):
         server.sendmail(sender, recipients, msg.as_string())
         print("메일 발송 성공")
 
-
 def main():
     html_dashboard = build_html_dashboard()
     send_email("SKT 뉴스 대시보드", html_dashboard, SMTP_USER, recipients)
-
 
 if __name__ == "__main__":
     main()
