@@ -1,5 +1,5 @@
 import requests
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from datetime import datetime, timedelta
 import random
 import html
@@ -26,8 +26,8 @@ recipients = ['jonah.whang@sktelecom.com', 'yona997@naver.com']
 keywords_en = ['mobile device', 'mobile modem chipset', 'on-device AI', 'on-device security']
 keywords_kr = ['이동통신 단말기', '단말 모뎀 칩셋', '온디바이스 AI', '온디바이스 보안']
 
-translator = Translator()
-today = datetime.utcnow().date() + timedelta(hours=9)  # UTC +9 서울시간으로 변환
+# 서울 시간 기준 오늘, 어제 날짜 계산
+today = datetime.utcnow().date() + timedelta(hours=9)
 yesterday = today - timedelta(days=1)
 
 NEWSAPI_URL = 'https://newsapi.org/v2/everything'
@@ -45,11 +45,15 @@ def fetch_newsapi_news(keyword):
         'to': to_date,
         'apiKey': NEWSAPI_KEY,
     }
-    response = requests.get(NEWSAPI_URL, params=params)
-    if response.status_code == 200:
-        return response.json().get('articles', [])
-    else:
-        print(f'NewsAPI error ({keyword}):', response.status_code, response.text)
+    try:
+        response = requests.get(NEWSAPI_URL, params=params, timeout=5)
+        if response.status_code == 200:
+            return response.json().get('articles', [])
+        else:
+            print(f'NewsAPI error ({keyword}):', response.status_code, response.text)
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f'NewsAPI request error ({keyword}):', e)
         return []
 
 def fetch_naver_news(keyword):
@@ -62,21 +66,25 @@ def fetch_naver_news(keyword):
         'display': 20,
         'sort': 'date'
     }
-    response = requests.get(NAVER_URL, headers=headers, params=params)
-    if response.status_code == 200:
-        items = response.json().get('items', [])
-        filtered_items = []
-        for item in items:
-            pub_date = item.get('pubDate', '')
-            try:
-                dt = datetime.strptime(pub_date[:-6], '%a, %d %b %Y %H:%M:%S')
-                if dt.date() == today:
-                    filtered_items.append(item)
-            except:
-                pass
-        return filtered_items[:10]
-    else:
-        print(f'Naver API error ({keyword}):', response.status_code, response.text)
+    try:
+        response = requests.get(NAVER_URL, headers=headers, params=params, timeout=5)
+        if response.status_code == 200:
+            items = response.json().get('items', [])
+            filtered_items = []
+            for item in items:
+                pub_date = item.get('pubDate', '')
+                try:
+                    dt = datetime.strptime(pub_date[:-6], '%a, %d %b %Y %H:%M:%S')
+                    if dt.date() == today:
+                        filtered_items.append(item)
+                except:
+                    pass
+            return filtered_items[:10]
+        else:
+            print(f'Naver API error ({keyword}):', response.status_code, response.text)
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f'Naver API request error ({keyword}):', e)
         return []
 
 def translate_text(text):
@@ -85,8 +93,7 @@ def translate_text(text):
     tries = 3
     for i in range(tries):
         try:
-            translated = translator.translate(text, src='en', dest='ko')
-            return translated.text
+            return GoogleTranslator(source='en', target='ko').translate(text)
         except Exception as e:
             print(f"Translation error on attempt {i+1}: {e}")
             time.sleep(1)
