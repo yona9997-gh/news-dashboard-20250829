@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install google-trans-new requests
+        pip install google-trans-new requests deep-translator
     - name: Run news dashboard email script
       env:
         NEWSAPI_KEY: ${{ secrets.NEWSAPI_KEY }}
